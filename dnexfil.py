@@ -3,29 +3,40 @@ import argparse
 import sys
 
 def extract_host_components(text):
-    results = []
+    raw_results = []
     lines = text.strip().splitlines()[1:]  # Skip the first line
 
     for line in lines:
         parts = line.split(',')
-        if len(parts) >= 7:
-            b64_data = parts[6]
+        if len(parts) >= 9:
+            b64_data = parts[9]
             try:
-                decoded = base64.b64decode(b64_data).decode('utf-8', errors='ignore')
-                for decoded_line in decoded.splitlines():
-                    if decoded_line.startswith("Host:"):
-                        host = decoded_line[len("Host: "):].strip()
-                        host_parts = host.split('.')
-                        if len(host_parts) >= 3:
-                            index = int(host_parts[0])       # Use the number for sorting
-                            binary = host_parts[1]
-                            chunk = host_parts[2]
-                            results.append((index, binary, chunk))
+                raw_data = base64.b64decode(b64_data)
+                domain_parts = []
+                i = 12  # DNS header is always 12 bytes
+                while i < len(raw_data):
+                    length = raw_data[i]
+                    if length == 0:
                         break
+                    i += 1
+                    label = raw_data[i:i+length]
+                    try:
+                        domain_parts.append(label.decode('utf-8'))
+                    except UnicodeDecodeError:
+                        break
+                    i += length
+
+                raw_results.append([int(domain_parts[0]),domain_parts[1],domain_parts[2]])
             except Exception:
                 pass  # Silently ignore decoding issues
-
+    
     # Sort by the numeric index and return list of [binary, chunk] pairs
+    tracked,results = [],[]
+    for result in raw_results:
+        if result[0] not in tracked:
+            tracked.append(result[0])
+            results.append(result)
+
     results.sort(key=lambda x: x[0])
     return [[binary, chunk] for _, binary, chunk in results]
 
